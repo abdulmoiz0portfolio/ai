@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>MUZZAINI AI</title>
+  <style>
+    /* General Setup */
+    body {margin:0; background:#121212; font-family:"Segoe UI",sans-serif; color:#fff;}
+
+    /* Modal Styles for Profile & API Key */
+    .modal-container { 
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+      background: rgba(0, 0, 0, 0.85); display: none; 
+      justify-content: center; align-items: center; z-index: 10000; 
+    }
+    .modal-form { 
+      background: #2d3748; padding: 30px; border-radius: 15px; 
+      width: 90%; max-width: 500px; text-align: center; 
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5); 
+      animation: fadeIn 0.3s ease-out; 
+    }
+    .modal-form h2 { margin-top: 0; color: #4c6ef5; }
+    .modal-form p { color: #a0aec0; margin-bottom: 20px;}
+    .modal-input { 
+      width: calc(100% - 24px); padding: 12px; margin-bottom: 15px; 
+      border-radius: 8px; border: 1px solid #4a5568; 
+      background: #1a202c; color: white; font-size: 16px; 
+    }
+    .modal-submit { 
+      width: 100%; padding: 12px 30px; 
+      background: #4c6ef5; color: white; border: none; 
+      border-radius: 8px; cursor: pointer; font-size: 16px; 
+      transition: background 0.3s; 
+    }
+    .modal-submit:hover { background: #3b5bdb; }
+    .skip-btn { background: #6c757d; margin-top: 10px; }
+    .skip-btn:hover { background: #5a6268; }
+
+    /* Loading Screen Styles */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #2d3748, #4a5568);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease-out;
+    }
+    
+    .loading-screen.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .loader {
+      width: 80px;
+      height: 80px;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-left: 4px solid #4c6ef5;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 30px;
+    }
+    
+    .loading-text {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+      background: linear-gradient(45deg, #4c6ef5, #ffd700);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 600;
+    }
+    
+    .loading-subtitle {
+      font-size: 1rem;
+      color: #e2e8f0;
+      opacity: 0.7;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+    
+    .progress-bar {
+      width: 200px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4c6ef5, #ffd700);
+      width: 0%;
+      border-radius: 2px;
+      animation: loadProgress 3s ease-out forwards;
+    }
+    
+    @keyframes loadProgress {
+      0% { width: 0%; }
+      25% { width: 30%; }
+      50% { width: 60%; }
+      75% { width: 85%; }
+      100% { width: 100%; }
+    }
+    
+    /* Landing Page Styles */
+    .landing-page {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #2d3748, #4a5568);
+      text-align: center;
+      animation: fadeInUp 0.8s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .landing-title {
+      font-size: 4rem;
+      font-weight: bold;
+      margin-bottom: 20px;
+      background: linear-gradient(45deg, #4c6ef5, #ffd700);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 20px rgba(76, 110, 245, 0.5);
+      }
+      to {
+        text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+      }
+    }
+    
+    .landing-subtitle {
+      font-size: 1.5rem;
+      margin-bottom: 40px;
+      color: #e2e8f0;
+      opacity: 0.9;
+    }
+    
+    .get-started-btn {
+      padding: 15px 40px;
+      font-size: 1.2rem;
+      background: linear-gradient(135deg, #4c6ef5, #3b5bdb);
+      border: none;
+      border-radius: 50px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 25px rgba(76, 110, 245, 0.4);
+      font-weight: 600;
+    }
+    
+    .get-started-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 35px rgba(76, 110, 245, 0.6);
+      background: linear-gradient(135deg, #3b5bdb, #2948c7);
+    }
+    
+    .features-preview {
+      margin-top: 60px;
+      display: flex;
+      gap: 30px;
+      opacity: 0.7;
+    }
+    
+    .feature-icon {
+      font-size: 2rem;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    
+    .feature-icon:hover {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+    
+    /* App Container Styles */
+    .app-container {
+      display: none;
+      animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .back-to-landing {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      padding: 10px 20px;
+      background: #6c757d;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 1000;
+      text-decoration: none;
+    }
+    
+    .back-to-landing:hover {
+      background: #5a6268;
+    }
+    
+    .top-bar {
+      padding: 15px 20px; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      background: #1a1a1a;
+    }
+    
+    .top-bar-btn {
+      padding: 10px 20px; 
+      background: #4a5568; 
+      border: none; 
+      border-radius: 8px; 
+      color: white; 
+      cursor: pointer; 
+      transition: background 0.3s ease; 
+      text-decoration: none;
+    }
+    
+    .logout-btn {
+      background: #c53030;
+    }
+    
+    /* Original App Styles */
+    .chat-wrapper {
+      max-width:800px; margin:20px auto; display:flex; flex-direction:column;
+      border-radius:20px; background:#1e1e1e; box-shadow:0 8px 30px rgba(0,0,0,.5);
+      height:90vh; overflow:hidden;
+    }
+    header {background:linear-gradient(135deg,#2d3748,#4a5568); text-align:center; padding:20px;}
+    header h1 {margin:0;font-size:1.8rem;}
+    .chat-pinned {
+      background: linear-gradient(135deg, #2c5282, #3182ce);
+      color: #fff;
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 15px;
+      text-align: center;
+      margin-bottom: 10px;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0,0,0,.3);
+    }
+
+    .chat-pinned a {
+      color: #ffd700;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .chat-pinned a:hover {
+      text-decoration: underline;
+    }
+    .chat-container {flex:1; padding:15px; overflow-y:auto; background:#2a2a2a;}
+    .chat-input {display:flex; gap:10px; padding:12px; background:#1f1f1f;}
+    #commandInput {flex:1; border-radius:20px; border:1px solid #444; padding:10px 15px;
+      background:#2d2d2d; color:#fff;}
+    button {border:none; border-radius:20px; padding:10px 18px; background:#4c6ef5;
+      color:#fff; cursor:pointer;}
+    button:hover {background:#3b5bdb;}
+    .chat-status {background:#1a1a1a; text-align:center; padding:10px; font-size:14px;}
+    .message {display:flex; margin-bottom:12px;}
+    .user-message {justify-content:flex-end;}
+    .assistant-message {justify-content:flex-start;}
+    .message-content {max-width:70%; border-radius:14px; padding:10px 14px;}
+    .user-message .message-content {background:#4c6ef5;}
+    .assistant-message .message-content {background:#343a40;}
+    .loading {display:none; justify-content:center; align-items:center; gap:8px; padding:6px;}
+    .spinner {width:20px; height:20px; border:3px solid rgba(255,255,255,.2);
+      border-top-color:#4c6ef5; border-radius:50%; animation:spin 1s linear infinite;}
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* Navigation styles */
+    .nav-container {text-align:center; margin:10px; background:#223; padding:10px; border-radius:10px;}
+    .nav-button {margin:0 5px;}
+    
+    /* Image generator styles */
+    .image-generator-wrapper {
+      max-width:850px; margin:20px auto; background:#1e1e1e; 
+      border-radius:20px; padding:20px; box-shadow:0 8px 30px rgba(0,0,0,.5);
+    }
+    #imagePromptInput {
+      width:40%; padding:12px; border-radius:10px; border:1px solid #444;
+      background:#2d2d2d; color:#fff;
+    }
+    #imageSizeInput, #imageCountInput {
+      padding:12px; border-radius:10px; border:1px solid #444;
+      background:#2d2d2d; color:#fff;
+    }
+    #imageLoadingEl {display:none; margin:20px 0; text-align:center;}
+    #imageOutputContainer {
+      text-align:center; margin-top:20px; display:flex; flex-wrap:wrap; justify-content:center;
+    }
+    .image-block {
+      margin:10px; padding:10px; background:#2a2a2a; border-radius:10px;
+      box-shadow:0 4px 8px rgba(0,0,0,.5); max-width:45%;
+    }
+    .image-block img {
+      max-width:100%; border-radius:10px; display:block; margin-bottom:8px;
+    }
+    .download-btn {
+      display:inline-block; padding:6px 12px; background:#4c6ef5; color:#fff; border-radius:6px;
+      text-decoration:none; font-size:14px;
+    }
+    .download-btn:hover {background:#3b5bdb;}
+    .image-status {background:#1a1a1a; text-align:center; padding:10px; font-size:14px;}
+  </style>
+</head>
+<body>
+
+  <!-- MODAL 1: Profile Creation -->
+  <div id="profileContainer" class="modal-container">
+    <div class="modal-form">
+      <h2>Create Your Profile</h2>
+      <p>Please enter your name and email to personalize your experience. This is saved only in your browser.</p>
+      <input type="text" id="nameInput" class="modal-input" placeholder="Enter Your Name" required>
+      <input type="email" id="emailInput" class="modal-input" placeholder="Enter Your Email" required>
+      <button id="profileSubmit" class="modal-submit">Next →</button>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Optional API Key -->
+  <div id="apiKeyContainer" class="modal-container">
+    <div class="modal-form">
+      <h2 id="apiKeyTitle">Use Your Own API Key (Optional)</h2>
+      <p id="apiKeyDescription">You can use your own OpenAI key for unlimited access, or skip to use the site's default key.</p>
+      <input type="password" id="apiKeyInput" class="modal-input" placeholder="Enter your key (sk-...)">
+      <button id="apiKeySubmit" class="modal-submit">Save Key</button>
+      <button id="skipApiKeyBtn" class="modal-submit skip-btn">Skip & Use Default</button>
+    </div>
+  </div>
+
+  <!-- Loading Screen -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loader"></div>
+    <div class="loading-text">MUZZAINI AI</div>
+    <div class="loading-subtitle">Initializing your AI experience...</div>
+    <div class="progress-bar">
+      <div class="progress-fill"></div>
+    </div>
+  </div>
+
+  <!-- Landing Page -->
+  <div id="landingPage" class="landing-page">
+    <h1 class="landing-title">MUZZAINI AI</h1>
+    <p class="landing-subtitle">Your intelligent conversation partner & image generator</p>
+    
+    <button onclick="showApp()" class="get-started-btn">GET STARTED</button>
+    
+    <div class="features-preview">
+      <div class="feature-icon">🎤</div>
+      <div class="feature-icon">🎨</div>
+      <div class="feature-icon">🚀</div>
+    </div>
+  </div>
+
+  <!-- Main App Container -->
+  <div id="appContainer" class="app-container">
+    <button onclick="showLanding()" class="back-to-landing">← Back to Home</button>
+    
+    <div class="top-bar">
+      <button onclick="showLanding()" class="top-bar-btn">← Home</button>
+      <div>
+        <button onclick="showApiKeyPrompt(true)" class="top-bar-btn">Change Key</button>
+        <button id="logoutBtn" class="top-bar-btn logout-btn">Logout</button>
+      </div>
+    </div>
+    
+    <!-- Navigation -->
+    <div class="nav-container" style="background-color: #778899;"> 
+      <div style="margin-bottom:8px;"> 
+        <div class="chat-pinned" style="border-radius:20px; background-color: #6495ED; color: #fff;"> 
+          📌 Follow the <b>0.1%</b> channel on 
+          <a href="https://whatsapp.com/channel/0029VbBLP0kDDmFZoqUiKK0k" target="_blank" style="color: #fff;">WhatsApp</a> 
+        </div> 
+      </div>
+      
+      <button onclick="showPage('assistantPage')" class="nav-button">🎤 AI Assistant</button>
+      <button onclick="showPage('imageGenPage')" class="nav-button">🎨 Image Generator</button>
+    </div>
+
+    <!-- AI Assistant Page -->
+    <div id="assistantPage" style="display:block;">
+      <div class="chat-wrapper">
+        <header>
+          <h1>MUZZAINI AI</h1>
+          <p>Welcome, <span id="userNameDisplay1"></span>!</p>
+        </header>
+        
+        <div id="chatContainerEl" class="chat-container"></div>
+
+        <div id="loadingEl" class="loading">
+          <div class="spinner"></div><span>Thinking...</span>
+        </div>
+
+        <div class="chat-input">
+          <input id="commandInput" type="text" placeholder="Type your message..." />
+          <button id="submitBtn">Send</button>
+          <button id="micBtn">🎤</button>
+          <button id="muteBtn">🔊</button>
+        </div>
+
+        <div id="statusEl" class="chat-status">Press mic or type to start chatting</div>
+      </div>
+    </div>
+
+    <!-- Image Generator Page -->
+    <div id="imageGenPage" style="display:none;">
+      <div class="image-generator-wrapper">
+        <header>
+          <h1>Image Generator</h1>
+          <p>Welcome, <span id="userNameDisplay2"></span>!</p>
+        </header>
+        
+        <div style="display:flex;justify-content:center;align-items:center; margin:20px 0; gap:10px; flex-wrap:wrap;">
+          <input id="imagePromptInput" type="text" placeholder="Describe the image you want..." />
+          
+          <select id="imageSizeInput">
+            <option value="256x256">256×256</option>
+            <option value="512x512" selected>512×512</option>
+            <option value="1024x1024">1024×1024</option>
+          </select>
+          
+          <select id="imageCountInput">
+            <option value="1" selected>1 image</option>
+            <option value="2">2 images</option>
+            <option value="4">4 images</option>
+          </select>
+          
+          <button id="generateImageBtn">Generate</button>
+        </div>
+        
+        <div id="imageLoadingEl" class="loading">
+          <div class="spinner"></div><span>Generating image(s)...</span>
+        </div>
+        
+        <div id="imageStatusEl" class="image-status">Enter a prompt to generate an image</div>
+        
+        <div id="imageOutputContainer"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+// --- CONFIGURATION ---
+const DEFAULT_API_KEY = "sk-"; 
+// --- NEW --- Replace with your SheetDB API URL:
+const SHEETDB_URL = "https://sheetdb.io/api/v1/aosep282u854w"; 
+
+// --- GLOBAL STATE ---
+let currentUser = null;
+let recognition;
+let isListening = false;
+let isMuted = false;
+let synth = window.speechSynthesis;
+let currentUtterance;
+
+// --- DOM ELEMENTS ---
+const profileContainer = document.getElementById('profileContainer');
+const apiKeyContainer = document.getElementById('apiKeyContainer');
+const loadingScreen = document.getElementById('loadingScreen');
+const landingPage = document.getElementById('landingPage');
+const appContainer = document.getElementById('appContainer');
+const chatContainerEl = document.getElementById("chatContainerEl");
+const commandInput = document.getElementById("commandInput");
+const submitBtn = document.getElementById("submitBtn");
+const micBtn = document.getElementById("micBtn");
+const muteBtn = document.getElementById("muteBtn");
+const statusEl = document.getElementById("statusEl");
+const loadingEl = document.getElementById("loadingEl");
+const imagePromptInput = document.getElementById("imagePromptInput");
+const imageSizeInput = document.getElementById("imageSizeInput");
+const imageCountInput = document.getElementById("imageCountInput");
+const generateImageBtn = document.getElementById("generateImageBtn");
+const imageLoadingEl = document.getElementById("imageLoadingEl");
+const imageStatusEl = document.getElementById("imageStatusEl");
+const imageOutputContainer = document.getElementById("imageOutputContainer");
+const logoutBtn = document.getElementById('logoutBtn');
+
+// --- AUTHENTICATION & SETUP ---
+function loadUser() {
+    try {
+        const userDataJSON = localStorage.getItem('muzzaini_user_profile_v3');
+        if (userDataJSON) currentUser = JSON.parse(userDataJSON);
+    } catch (e) { 
+        localStorage.removeItem('muzzaini_user_profile_v3');
+        currentUser = null;
+    }
+}
+
+function startApp() {
+    setTimeout(() => {
+        if (loadingScreen) {
+            loadingScreen.classList.add('fade-out');
+            setTimeout(() => {
+                if (loadingScreen) loadingScreen.style.display = 'none';
+                
+                if (currentUser && currentUser.name) {
+                    if (document.getElementById('userNameDisplay1')) 
+                        document.getElementById('userNameDisplay1').textContent = currentUser.name;
+                    if (document.getElementById('userNameDisplay2')) 
+                        document.getElementById('userNameDisplay2').textContent = currentUser.name;
+                    if (landingPage) landingPage.style.display = 'flex';
+                } else {
+                    if (profileContainer) profileContainer.style.display = 'flex';
+                }
+            }, 500);
+        }
+    }, 3000);
+}
+
+// --- INITIALIZATION & NAVIGATION ---
+window.addEventListener('load', () => {
+    loadUser();
+    startApp();
+    
+    const profileSubmit = document.getElementById('profileSubmit');
+    if (profileSubmit) {
+        profileSubmit.addEventListener('click', () => {
+            const nameInput = document.getElementById('nameInput');
+            const emailInput = document.getElementById('emailInput');
+            const name = nameInput ? nameInput.value.trim() : '';
+            const email = emailInput ? emailInput.value.trim() : '';
+            
+            if (!name || !email) { 
+                alert('Please enter your name and email.'); 
+                return; 
+            }
+            if (!email.includes('@')) {
+                alert('Please enter a valid email address.'); 
+                return;
+            }
+            
+            sessionStorage.setItem('tempUserName', name);
+            sessionStorage.setItem('tempUserEmail', email);
+            if (profileContainer) profileContainer.style.display = 'none';
+            showApiKeyPrompt(false);
+        });
+    }
+    
+    const apiKeySubmit = document.getElementById('apiKeySubmit');
+    if (apiKeySubmit) {
+        apiKeySubmit.addEventListener('click', () => {
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            const customKey = apiKeyInput ? apiKeyInput.value.trim() : '';
+            if (customKey && !customKey.startsWith('sk-')) {
+                alert('Please enter a valid API key starting with "sk-", or leave it blank.');
+                return;
+            }
+            completeLogin(customKey || null);
+        });
+    }
+    
+    const skipApiKeyBtn = document.getElementById('skipApiKeyBtn');
+    if (skipApiKeyBtn) {
+        skipApiKeyBtn.addEventListener('click', () => completeLogin(null));
+    }
+    
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('muzzaini_user_profile_v3');
+            alert("You have been logged out.");
+            location.reload();
+        });
+    }
+    
+    if (submitBtn) {
+        submitBtn.addEventListener('click', () => {
+            if (commandInput && commandInput.value.trim()) 
+                processCommand(commandInput.value.trim());
+        });
+    }
+    
+    if (commandInput) {
+        commandInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter" && commandInput.value.trim()) 
+                processCommand(commandInput.value.trim());
+        });
+    }
+    
+    if (micBtn) {
+        micBtn.addEventListener('click', () => {
+            if (!recognition) { alert("Speech recognition not supported"); return; }
+            if (isListening) {
+                recognition.stop();
+                if (statusEl) statusEl.textContent = "Stopped listening";
+                isListening = false;
+                return;
+            }
+            recognition.start();
+            if (statusEl) statusEl.textContent = "🎤 Listening...";
+            isListening = true;
+        });
+    }
+    
+    if (muteBtn) {
+        muteBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            muteBtn.textContent = isMuted ? "🔇" : "🔊";
+            if (currentUtterance) synth.cancel();
+        });
+    }
+    
+    if (generateImageBtn) {
+        generateImageBtn.addEventListener('click', async () => {
+            const prompt = imagePromptInput.value.trim();
+            if (!prompt) { 
+                if (imageStatusEl) imageStatusEl.textContent = "Please enter a prompt"; 
+                return; 
+            }
+            if (imageLoadingEl) imageLoadingEl.style.display = "flex";
+            generateImageBtn.disabled = true;
+            if (imageStatusEl) imageStatusEl.textContent = "Generating...";
+            try {
+                const size = imageSizeInput.value;
+                const count = parseInt(imageCountInput.value, 10);
+                const data = await makeApiCall("images/generations", { 
+                    model: "dall-e-2", 
+                    prompt: prompt,
+                    size: size,
+                    n: count
+                });
+                if (imageOutputContainer) imageOutputContainer.innerHTML = "";
+                data.data.forEach((d, i) => {
+                    const block = document.createElement("div");
+                    block.className = "image-block";
+                    const img = document.createElement("img");
+                    img.src = d.url;
+                    const link = document.createElement("a");
+                    link.href = d.url; 
+                    link.download = `image_${i+1}.png`;
+                    link.textContent = "⬇️ Download"; 
+                    link.className = "download-btn";
+                    block.appendChild(img); block.appendChild(link);
+                    imageOutputContainer.appendChild(block);
+                });
+                if (imageStatusEl) imageStatusEl.textContent = `Generated ${count} image(s) successfully!`;
+            } catch (err) {
+                if (imageStatusEl) imageStatusEl.textContent = "⚠️ Error: " + err.message;
+            } finally {
+                if (imageLoadingEl) imageLoadingEl.style.display = "none";
+                generateImageBtn.disabled = false;
+            }
+        });
+    }
+});
+
+// --- REPLACEMENT FUNCTION: Save profile data to SheetDB ---
+async function saveProfileToSheetDB(name, email) {
+    const timestamp = new Date().toISOString(); // auto timestamp
+
+    try {
+        const response = await fetch(SHEETDB_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                data: [
+                    { name: name, email: email, joined_at: timestamp }
+                ]
+            })
+        });
+
+        const result = await response.json();
+        console.log("SheetDB response:", result);
+
+        if (result.created || result[0]?.name) {
+            console.log("✅ Profile saved to SheetDB with timestamp.");
+        } else {
+            console.error("❌ Failed to save profile to SheetDB:", result);
+        }
+    } catch (error) {
+        console.error("⚠️ Error saving profile to SheetDB:", error);
+    }
+}
+
+function showApiKeyPrompt(isChangingKey) {
+    const title = document.getElementById('apiKeyTitle');
+    const desc = document.getElementById('apiKeyDescription');
+    if (title && desc) {
+        if (isChangingKey) {
+            title.textContent = 'Change Your API Key';
+            desc.textContent = 'Enter a new key below, or leave it blank and save to revert to the default key.';
+            const skipApiKeyBtn = document.getElementById('skipApiKeyBtn');
+            if (skipApiKeyBtn) skipApiKeyBtn.style.display = 'none';
+        } else {
+            title.textContent = 'Use Your Own API Key (Optional)';
+            desc.textContent = "You can use your own OpenAI key for unlimited access, or skip to use the site's default key.";
+            const skipApiKeyBtn = document.getElementById('skipApiKeyBtn');
+            if (skipApiKeyBtn) skipApiKeyBtn.style.display = 'inline-block';
+        }
+        if (apiKeyContainer) apiKeyContainer.style.display = 'flex';
+    }
+}
+
+// --- MODIFIED: completeLogin now saves to SheetDB ---
+function completeLogin(customKey = null) {
+    const name = sessionStorage.getItem('tempUserName');
+    const email = sessionStorage.getItem('tempUserEmail'); 
+    
+    if (!name) {
+        console.error("Name missing from session storage. Cannot complete login.");
+        return;
+    }
+
+    currentUser = { name, email: email || '', customApiKey: customKey };
+    localStorage.setItem('muzzaini_user_profile_v3', JSON.stringify(currentUser));
+
+    if (email) {
+        saveProfileToSheetDB(name, email);
+    } else {
+        console.log("No email provided, skipping SheetDB save.");
+    }
+
+    sessionStorage.removeItem('tempUserName');
+    sessionStorage.removeItem('tempUserEmail');
+    if (apiKeyContainer) apiKeyContainer.style.display = 'none';
+    
+    if (currentUser && currentUser.name) {
+        const userNameDisplay1 = document.getElementById('userNameDisplay1');
+        const userNameDisplay2 = document.getElementById('userNameDisplay2');
+        if (userNameDisplay1) userNameDisplay1.textContent = currentUser.name;
+        if (userNameDisplay2) userNameDisplay2.textContent = currentUser.name;
+        if (landingPage) landingPage.style.display = 'flex';
+    }
+}
+
+function showLanding() { 
+    if (appContainer) appContainer.style.display = "none"; 
+    if (landingPage) landingPage.style.display = "flex"; 
+}
+
+function showApp() { 
+    if (landingPage) landingPage.style.display = "none"; 
+    if (appContainer) appContainer.style.display = "block"; 
+}
+
+function showPage(pageId) {
+    const assistantPage = document.getElementById("assistantPage");
+    const imageGenPage = document.getElementById("imageGenPage");
+    if (assistantPage) assistantPage.style.display = (pageId === 'assistantPage' ? 'block' : 'none');
+    if (imageGenPage) imageGenPage.style.display = (pageId === 'imageGenPage' ? 'block' : 'none');
+}
+
+// Speech recognition setup
+if ('webkitSpeechRecognition' in window) recognition = new webkitSpeechRecognition();
+else if ('SpeechRecognition' in window) recognition = new SpeechRecognition();
+if (recognition) {
+    recognition.lang = 'en-US';
+    recognition.onresult = e => {
+        const t = e.results[0][0].transcript;
+        processCommand(t);
+    };
+}
+
+// --- SHARED API CALL ---
+async function makeApiCall(endpoint, body) {
+    if (!currentUser) throw new Error("No user logged in");
+
+    const activeApiKey = (currentUser.customApiKey || DEFAULT_API_KEY);
+    if (!activeApiKey.startsWith('sk-')) {
+        throw new Error("API key is invalid or missing.");
+    }
+    const res = await fetch(`https://api.openai.com/v1/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeApiKey}` },
+        body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error.message || `API error: ${res.status}`);
+    }
+    return res.json();
+}
+
+// --- AI ASSISTANT ---
+function addMessage(role, text) {
+    if (!chatContainerEl) return;
+    
+    const msg = document.createElement("div");
+    msg.className = "message " + (role === "user" ? "user-message" : "assistant-message");
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    contentDiv.textContent = text;
+    msg.appendChild(contentDiv);
+    chatContainerEl.appendChild(msg);
+    chatContainerEl.scrollTop = chatContainerEl.scrollHeight;
+}
+
+function speak(text) {
+    if (isMuted || !synth) return;
+    if (currentUtterance) synth.cancel();
+    currentUtterance = new SpeechSynthesisUtterance(text);
+    currentUtterance.lang = "en-US";
+    synth.speak(currentUtterance);
+}
+
+async function processCommand(command) {
+    if (!chatContainerEl || !statusEl || !loadingEl) return;
+    
+    addMessage("user", command);
+    if (commandInput) commandInput.value = "";
+    if (statusEl) statusEl.textContent = "You: " + command;
+    if (loadingEl) loadingEl.style.display = "flex";
+    
+    try {
+        const data = await makeApiCall("chat/completions", {
+            model: "gpt-4o-mini",
+            messages: [
+                { role: "system", content: `You are chatting with ${currentUser.name}${currentUser.email ? ' (email: ' + currentUser.email + ')' : ''}.` },
+                { role: "user", content: command }
+            ]
+        });
+        addMessage("assistant", data.choices[0].message.content);
+        speak(data.choices[0].message.content);
+        if (statusEl) statusEl.textContent = "Ready for next message";
+    } catch (e) {
+        addMessage("assistant", "⚠️ Error: " + e.message);
+    } finally {
+        if (loadingEl) loadingEl.style.display = "none";
+    }
+}
+</script>
+</body>
+</html>
